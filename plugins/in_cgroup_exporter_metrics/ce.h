@@ -29,6 +29,9 @@ struct flb_ce {
 
     /* PSI metrics */
     struct cmt_counter* psi_total_seconds;
+    struct cmt_gauge* psi_avg10;
+    struct cmt_gauge* psi_avg60;
+    struct cmt_gauge* psi_avg300;
 };
 
 struct flb_ce_collector {

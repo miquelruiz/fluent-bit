@@ -31,6 +31,7 @@ struct ce_psi {
 static int ce_psi_init(struct flb_ce* ctx)
 {
     struct cmt_counter* c;
+    struct cmt_gauge* g;
 
     c = cmt_counter_create(ctx->cmt,
         "ce", "psi", "psi_total_seconds",
@@ -40,6 +41,33 @@ static int ce_psi_init(struct flb_ce* ctx)
         return -1;
     }
     ctx->psi_total_seconds = c;
+
+    g = cmt_gauge_create(ctx->cmt,
+        "ce", "psi", "psi_avg10_ratio",
+        "% of time stalled over 10s window",
+        3, (char*[]) { "controller", "cgroup", "kind" });
+    if (!g) {
+        return -1;
+    }
+    ctx->psi_avg10 = g;
+
+    g = cmt_gauge_create(ctx->cmt,
+        "ce", "psi", "psi_avg60_ratio",
+        "% of time stalled over 60s window",
+        3, (char*[]) { "controller", "cgroup", "kind" });
+    if (!g) {
+        return -1;
+    }
+    ctx->psi_avg60 = g;
+
+    g = cmt_gauge_create(ctx->cmt,
+        "ce", "psi", "psi_avg300_ratio",
+        "% of time stalled over 300s window",
+        3, (char*[]) { "controller", "cgroup", "kind" });
+    if (!g) {
+        return -1;
+    }
+    ctx->psi_avg300 = g;
 
     return 0;
 }
@@ -76,11 +104,11 @@ static int ce_parse_psi_line(char* line, struct ce_psi* psi)
 static int ce_update_psi_metrics(struct flb_ce* ctx, char* controller, char* cgroup)
 {
     int ret;
+    uint64_t ts;
     char line[CE_PSI_MAX_LINE_SIZE];
     flb_sds_t path;
     flb_sds_t tmp;
     struct ce_psi psi;
-
     FILE* fp = NULL;
 
     path = flb_sds_create_size(
@@ -110,26 +138,52 @@ static int ce_update_psi_metrics(struct flb_ce* ctx, char* controller, char* cgr
         return -1;
     }
 
+    ts = cfl_time_now();
     while (fgets(line, CE_PSI_MAX_LINE_SIZE - 1, fp) != NULL) {
         ret = ce_parse_psi_line(line, &psi);
         if (ret != 0) {
             flb_plg_warn(ctx->ins, "malformed psi data in %s", path);
             flb_sds_destroy(path);
+            fclose(fp);
             return -1;
         }
 
         ret = cmt_counter_set(
-            ctx->psi_total_seconds,
-            cfl_time_now(),
-            psi.total,
-            3,
-            (char*[]) { controller, cgroup, psi.kind == CE_PSI_KIND_FULL ? CE_PSI_FULL : CE_PSI_SOME });
+            ctx->psi_total_seconds, ts,
+            psi.total / 1e6, // The raw value is micro-seconds
+            3, (char*[]) { controller, cgroup, psi.kind == CE_PSI_KIND_FULL ? CE_PSI_FULL : CE_PSI_SOME });
         if (ret != 0) {
             flb_plg_warn(ctx->ins, "failed to set psi counter");
+        }
+
+        ret = cmt_gauge_set(
+            ctx->psi_avg10, ts,
+            psi.avg10,
+            3, (char*[]) { controller, cgroup, psi.kind == CE_PSI_KIND_FULL ? CE_PSI_FULL : CE_PSI_SOME });
+        if (ret != 0) {
+            flb_plg_warn(ctx->ins, "failed to set psi gauge");
+        }
+
+        ret = cmt_gauge_set(
+            ctx->psi_avg60, ts,
+            psi.avg60,
+            3, (char*[]) { controller, cgroup, psi.kind == CE_PSI_KIND_FULL ? CE_PSI_FULL : CE_PSI_SOME });
+        if (ret != 0) {
+            flb_plg_warn(ctx->ins, "failed to set psi gauge");
+        }
+
+        ret = cmt_gauge_set(
+            ctx->psi_avg300, ts,
+            psi.avg300,
+            3, (char*[]) { controller, cgroup, psi.kind == CE_PSI_KIND_FULL ? CE_PSI_FULL : CE_PSI_SOME });
+        if (ret != 0) {
+            flb_plg_warn(ctx->ins, "failed to set psi gauge");
         }
     }
 
     flb_sds_destroy(path);
+    fclose(fp);
+
     return 0;
 }
 
