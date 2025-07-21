@@ -66,7 +66,7 @@ static int in_ce_collect(struct flb_input_instance* ins,
 
     return 0;
 }
-static int collectors_common_init(
+static int ce_collectors_common_init(
     struct flb_ce* ctx,
     struct flb_config* config,
     struct flb_ce_collector* coll)
@@ -129,7 +129,7 @@ in_ce_init(struct flb_input_instance* in, struct flb_config* config, void* data)
     mk_list_foreach(head, &ctx->collectors)
     {
         coll = mk_list_entry(head, struct flb_ce_collector, _head);
-        collectors_common_init(ctx, config, coll);
+        ce_collectors_common_init(ctx, config, coll);
     }
 
     flb_input_set_context(in, ctx);
@@ -149,12 +149,20 @@ in_ce_init(struct flb_input_instance* in, struct flb_config* config, void* data)
 static int in_ce_exit(void* data, struct flb_config* config)
 {
     struct flb_ce* ctx = data;
+    struct flb_ce_collector* coll;
+    struct mk_list* head;
 
     if (!ctx) {
         return 0;
     }
 
-    // TODO call cb_exit on every collector
+    mk_list_foreach(head, &ctx->collectors)
+    {
+        coll = mk_list_entry(head, struct flb_ce_collector, _head);
+        if (coll->cb_exit) {
+            coll->cb_exit(ctx);
+        }
+    }
 
     flb_ce_config_destroy(ctx);
     return 0;
