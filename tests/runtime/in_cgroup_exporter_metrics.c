@@ -1,18 +1,48 @@
 #include "flb_tests_runtime.h"
 #include <fluent-bit.h>
 
+#include <stdio.h>
+
 #define DPATH_MOUNTPOINT FLB_TESTS_DATA_PATH "/data/in_cgroup_exporter_metrics/sys/fs/cgroup"
 
-char* expected_metrics[] = { "\"psi_total_seconds\"" };
-
-struct str_list {
-    size_t size;
-    char** lists;
+char* expected_lines[] = {
+    "ce_psi_psi_total_seconds{controller=\"memory\",cgroup=\"/\",kind=\"some\"} = 999999999.99999905",
+    "ce_psi_psi_total_seconds{controller=\"memory\",cgroup=\"/\",kind=\"full\"} = 888888888.888888",
+    "ce_psi_psi_avg10_ratio{controller=\"memory\",cgroup=\"/\",kind=\"some\"} = 10",
+    "ce_psi_psi_avg10_ratio{controller=\"memory\",cgroup=\"/\",kind=\"full\"} = 11",
+    "ce_psi_psi_avg60_ratio{controller=\"memory\",cgroup=\"/\",kind=\"some\"} = 60",
+    "ce_psi_psi_avg60_ratio{controller=\"memory\",cgroup=\"/\",kind=\"full\"} = 61",
+    "ce_psi_psi_avg300_ratio{controller=\"memory\",cgroup=\"/\",kind=\"some\"} = 300",
+    "ce_psi_psi_avg300_ratio{controller=\"memory\",cgroup=\"/\",kind=\"full\"} = 301",
 };
+
+void check_output(FILE* f)
+{
+    char* line = NULL;
+    size_t len = 0;
+    ssize_t n;
+    bool found[8] = { false };
+
+    rewind(f);
+    while ((n = getline(&line, &len, f)) != -1) {
+        for (int i = 0; i < 8; i++) {
+            if (strstr(line, expected_lines[i]) != NULL) {
+                found[i] = true;
+                goto outer;
+            }
+        }
+    outer:
+    }
+
+    for (int i = 0; i < 8; i++) {
+        TEST_CHECK(found[i] == true);
+    }
+
+    free(line);
+}
 
 void do_create(flb_ctx_t* ctx, struct flb_lib_out_cb* cb_data, char* system, ...)
 {
-    int ret;
     int in_ffd;
     int out_ffd;
     va_list va;
@@ -29,56 +59,35 @@ void do_create(flb_ctx_t* ctx, struct flb_lib_out_cb* cb_data, char* system, ...
     }
     va_end(va);
 
-    out_ffd = flb_output(ctx, (char*)"lib", (void*)cb_data);
+    out_ffd = flb_output(ctx, (char*)"stdout", (void*)cb_data);
     TEST_CHECK(out_ffd >= 0);
-
-    ret = flb_output_set(ctx, out_ffd, "format", "json", NULL);
-    TEST_CHECK(ret == 0);
 
     TEST_CHECK(flb_service_set(ctx,
                    "Flush", "0.5",
                    "Grace", "1",
-                   "log_level", "debug",
+                   "log_level", "warn",
                    NULL)
         == 0);
-}
-
-static int cb_check_metrics(void* record, size_t size, void* data)
-{
-    size_t i;
-    char* found;
-    char* json = (char*)record;
-    struct str_list* metrics = (struct str_list*)data;
-
-    TEST_CHECK(json != NULL);
-    TEST_CHECK(size > 0);
-
-    // TODO maybe decode the json and inspect it more thoroughly
-    puts(json);
-    for (i = 0; i < metrics->size; i++) {
-        found = strstr(json, metrics->lists[i]);
-        if (!TEST_CHECK(found != NULL)) {
-            TEST_MSG("Expected to find: '%s' in result '%s'",
-                metrics->lists[i], json);
-        }
-    }
-
-    return 0;
 }
 
 void flb_test_system_psi()
 {
     struct flb_lib_out_cb cb_data;
-
     flb_ctx_t* ctx = flb_create();
 
-    struct str_list expected = {
-        .size = sizeof(expected_metrics) / sizeof(char*),
-        .lists = &expected_metrics[0],
+    int tmpfd, orig_stdout, stdout_fd;
+    FILE* tmp;
 
-    };
-    cb_data.cb = cb_check_metrics;
-    cb_data.data = &expected;
+    // Create a temp file and get its file descriptor
+    tmp = tmpfile();
+    tmpfd = fileno(tmp);
+
+    // Store original stdout's file descriptor
+    stdout_fd = fileno(stdout);
+    orig_stdout = dup(stdout_fd);
+
+    // Make stdout point to the temp file
+    dup2(tmpfd, stdout_fd);
 
     do_create(ctx,
         &cb_data,
@@ -93,6 +102,14 @@ void flb_test_system_psi()
 
     flb_stop(ctx);
     flb_destroy(ctx);
+
+    // Restore stdout
+    dup2(orig_stdout, stdout_fd);
+
+    check_output(tmp);
+
+    // Close temp file
+    fclose(tmp);
 }
 
 TEST_LIST = {
