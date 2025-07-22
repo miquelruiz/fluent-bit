@@ -112,13 +112,14 @@ static int ce_update_psi_metrics(struct flb_ce* ctx, char* controller, char* cgr
     FILE* fp = NULL;
 
     path = flb_sds_create_size(
-        flb_sds_len(ctx->mountpoint) + strlen(cgroup) + strlen(controller) + CE_PSI_PRESSURE_SUFFIX_LEN + 2);
+        // Account for the extra "/" and the null character termination
+        flb_sds_len(ctx->mountpoint) + strlen(cgroup) + 1 + strlen(controller) + CE_PSI_PRESSURE_SUFFIX_LEN + 1);
     if (!path) {
         flb_errno();
         return -1;
     }
 
-    tmp = flb_sds_printf(&path, strlen(cgroup) == 1 ? "%s%s%s%s" : "%s%s/%s%s",
+    tmp = flb_sds_printf(&path, "%s%s/%s%s",
         ctx->mountpoint,
         cgroup,
         controller,

@@ -65,7 +65,7 @@ void do_create(flb_ctx_t* ctx, struct flb_lib_out_cb* cb_data, char* system, ...
     TEST_CHECK(flb_service_set(ctx,
                    "Flush", "0.5",
                    "Grace", "1",
-                   "log_level", "warn",
+                   "log_level", "debug",
                    NULL)
         == 0);
 }
