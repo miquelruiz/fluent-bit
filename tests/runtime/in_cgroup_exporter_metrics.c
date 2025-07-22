@@ -6,14 +6,14 @@
 #define DPATH_MOUNTPOINT FLB_TESTS_DATA_PATH "/data/in_cgroup_exporter_metrics/sys/fs/cgroup"
 
 char* expected_lines[] = {
-    "ce_psi_psi_total_seconds{controller=\"memory\",cgroup=\"/\",kind=\"some\"} = 999999999.99999905",
-    "ce_psi_psi_total_seconds{controller=\"memory\",cgroup=\"/\",kind=\"full\"} = 888888888.888888",
-    "ce_psi_psi_avg10_ratio{controller=\"memory\",cgroup=\"/\",kind=\"some\"} = 10",
-    "ce_psi_psi_avg10_ratio{controller=\"memory\",cgroup=\"/\",kind=\"full\"} = 11",
-    "ce_psi_psi_avg60_ratio{controller=\"memory\",cgroup=\"/\",kind=\"some\"} = 60",
-    "ce_psi_psi_avg60_ratio{controller=\"memory\",cgroup=\"/\",kind=\"full\"} = 61",
-    "ce_psi_psi_avg300_ratio{controller=\"memory\",cgroup=\"/\",kind=\"some\"} = 300",
-    "ce_psi_psi_avg300_ratio{controller=\"memory\",cgroup=\"/\",kind=\"full\"} = 301",
+    "cgroups_psi_total_seconds{controller=\"memory\",cgroup=\"/\",kind=\"some\"} = 999999999.99999905",
+    "cgroups_psi_total_seconds{controller=\"memory\",cgroup=\"/\",kind=\"full\"} = 888888888.888888",
+    "cgroups_psi_avg10_ratio{controller=\"memory\",cgroup=\"/\",kind=\"some\"} = 10",
+    "cgroups_psi_avg10_ratio{controller=\"memory\",cgroup=\"/\",kind=\"full\"} = 11",
+    "cgroups_psi_avg60_ratio{controller=\"memory\",cgroup=\"/\",kind=\"some\"} = 60",
+    "cgroups_psi_avg60_ratio{controller=\"memory\",cgroup=\"/\",kind=\"full\"} = 61",
+    "cgroups_psi_avg300_ratio{controller=\"memory\",cgroup=\"/\",kind=\"some\"} = 300",
+    "cgroups_psi_avg300_ratio{controller=\"memory\",cgroup=\"/\",kind=\"full\"} = 301",
 };
 
 void check_output(FILE* f)

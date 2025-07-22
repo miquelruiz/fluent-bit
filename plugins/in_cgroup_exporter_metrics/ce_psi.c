@@ -34,7 +34,7 @@ static int ce_psi_init(struct flb_ce* ctx)
     struct cmt_gauge* g;
 
     c = cmt_counter_create(ctx->cmt,
-        "ce", "psi", "psi_total_seconds",
+        "cgroups", "psi", "total_seconds",
         "Absolute stall time",
         3, (char*[]) { "controller", "cgroup", "kind" });
     if (!c) {
@@ -43,7 +43,7 @@ static int ce_psi_init(struct flb_ce* ctx)
     ctx->psi_total_seconds = c;
 
     g = cmt_gauge_create(ctx->cmt,
-        "ce", "psi", "psi_avg10_ratio",
+        "cgroups", "psi", "avg10_ratio",
         "% of time stalled over 10s window",
         3, (char*[]) { "controller", "cgroup", "kind" });
     if (!g) {
@@ -52,7 +52,7 @@ static int ce_psi_init(struct flb_ce* ctx)
     ctx->psi_avg10 = g;
 
     g = cmt_gauge_create(ctx->cmt,
-        "ce", "psi", "psi_avg60_ratio",
+        "cgroups", "psi", "avg60_ratio",
         "% of time stalled over 60s window",
         3, (char*[]) { "controller", "cgroup", "kind" });
     if (!g) {
@@ -61,7 +61,7 @@ static int ce_psi_init(struct flb_ce* ctx)
     ctx->psi_avg60 = g;
 
     g = cmt_gauge_create(ctx->cmt,
-        "ce", "psi", "psi_avg300_ratio",
+        "cgroups", "psi", "avg300_ratio",
         "% of time stalled over 300s window",
         3, (char*[]) { "controller", "cgroup", "kind" });
     if (!g) {
