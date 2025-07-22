@@ -191,7 +191,9 @@ static struct flb_config_map config_map[] = {
         0,
         FLB_TRUE,
         offsetof(struct flb_ce, cgroups),
-        "Comma separated list of cgroups to monitor." },
+        "Comma-separated list of cgroup directories."
+        "E.g. the cgroup corresponding to the 'workload-main.slice' cgroup would be "
+        "/workload.slice/workload-main.slice" },
 
     { FLB_CONFIG_MAP_CLIST,
         "psi_controllers",
