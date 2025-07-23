@@ -3,6 +3,7 @@
 #ifndef FLB_CGROUP_EXPORTER_H
 #define FLB_CGROUP_EXPORTER_H
 
+#include "ce_memory.h"
 #include "ce_psi.h"
 
 #include <cmetrics/cmetrics.h>
@@ -33,6 +34,24 @@ struct flb_ce {
     struct cmt_gauge* psi_avg10;
     struct cmt_gauge* psi_avg60;
     struct cmt_gauge* psi_avg300;
+
+    /* Memory metrics */
+    struct cmt_gauge* memory_peak;
+    struct cmt_gauge* memory_current;
+    struct cmt_gauge* memory_swap_peak;
+    struct cmt_gauge* memory_swap_current;
+
+    struct cmt_counter* memory_events_low;
+    struct cmt_counter* memory_events_high;
+    struct cmt_counter* memory_events_max;
+    struct cmt_counter* memory_events_oom;
+    struct cmt_counter* memory_events_oom_kill;
+    struct cmt_counter* memory_events_oom_group_kill;
+
+    struct cmt_gauge* memory_min;
+    struct cmt_gauge* memory_low;
+    struct cmt_gauge* memory_high;
+    struct cmt_gauge* memory_max;
 };
 
 struct flb_ce_collector {

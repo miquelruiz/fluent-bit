@@ -5,7 +5,7 @@
 
 #define DPATH_MOUNTPOINT FLB_TESTS_DATA_PATH "/data/in_cgroup_exporter_metrics/sys/fs/cgroup"
 
-char* expected_lines[] = {
+char* expected_psi_lines[] = {
     "cgroups_psi_total_seconds{controller=\"memory\",cgroup=\"/\",kind=\"some\"} = 999999999.99999905",
     "cgroups_psi_total_seconds{controller=\"memory\",cgroup=\"/\",kind=\"full\"} = 888888888.888888",
     "cgroups_psi_avg10_ratio{controller=\"memory\",cgroup=\"/\",kind=\"some\"} = 10",
@@ -26,7 +26,7 @@ void check_output(FILE* f)
     rewind(f);
     while ((n = getline(&line, &len, f)) != -1) {
         for (int i = 0; i < 8; i++) {
-            if (strstr(line, expected_lines[i]) != NULL) {
+            if (strstr(line, expected_psi_lines[i]) != NULL) {
                 found[i] = true;
                 goto outer;
             }
@@ -41,7 +41,7 @@ void check_output(FILE* f)
     free(line);
 }
 
-void do_create(flb_ctx_t* ctx, struct flb_lib_out_cb* cb_data, char* system, ...)
+void do_create(flb_ctx_t* ctx, char* system, ...)
 {
     int in_ffd;
     int out_ffd;
@@ -59,7 +59,7 @@ void do_create(flb_ctx_t* ctx, struct flb_lib_out_cb* cb_data, char* system, ...
     }
     va_end(va);
 
-    out_ffd = flb_output(ctx, (char*)"stdout", (void*)cb_data);
+    out_ffd = flb_output(ctx, (char*)"stdout", NULL);
     TEST_CHECK(out_ffd >= 0);
 
     TEST_CHECK(flb_service_set(ctx,
@@ -72,7 +72,6 @@ void do_create(flb_ctx_t* ctx, struct flb_lib_out_cb* cb_data, char* system, ...
 
 void flb_test_system_psi()
 {
-    struct flb_lib_out_cb cb_data;
     flb_ctx_t* ctx = flb_create();
 
     int tmpfd, orig_stdout, stdout_fd;
@@ -90,7 +89,6 @@ void flb_test_system_psi()
     dup2(tmpfd, stdout_fd);
 
     do_create(ctx,
-        &cb_data,
         "cgroup_exporter_metrics",
         "mountpoint", DPATH_MOUNTPOINT,
         "scrape_interval", "1",
@@ -112,7 +110,12 @@ void flb_test_system_psi()
     fclose(tmp);
 }
 
+void flb_test_memory_metrics(void)
+{
+}
+
 TEST_LIST = {
     { "system_psi", flb_test_system_psi },
+    { "memory_metrics", flb_test_memory_metrics },
     { NULL, NULL }
 };

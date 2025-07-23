@@ -1,4 +1,5 @@
 set(src
+  ce_memory.c
   ce_psi.c
   ce.c
 )

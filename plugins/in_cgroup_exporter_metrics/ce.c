@@ -125,10 +125,12 @@ in_ce_init(struct flb_input_instance* in, struct flb_config* config, void* data)
 
     mk_list_init(&ctx->collectors);
     mk_list_add(&psi_collector._head, &ctx->collectors);
+    mk_list_add(&memory_collector._head, &ctx->collectors);
 
     mk_list_foreach(head, &ctx->collectors)
     {
         coll = mk_list_entry(head, struct flb_ce_collector, _head);
+        flb_plg_debug(ctx->ins, "intialising %s collector", coll->name);
         ce_collectors_common_init(ctx, config, coll);
     }
 
