@@ -8,6 +8,7 @@
 #include <cmetrics/cmetrics.h>
 #include <fluent-bit/flb_config.h>
 #include <fluent-bit/flb_sds.h>
+#include <monkey/mk_core/mk_list.h>
 
 #define CE_DEFAULT_CGROUPS "/"
 #define CE_DEFAULT_CONTROLLERS "cpu,memory,io"
