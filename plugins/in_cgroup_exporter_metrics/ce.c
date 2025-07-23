@@ -168,6 +168,41 @@ static int in_ce_exit(void* data, struct flb_config* config)
     return 0;
 }
 
+static void in_ce_pause(void* data, struct flb_config* config)
+{
+    struct flb_ce* ctx = data;
+    struct flb_ce_collector* coll;
+    struct mk_list* head;
+
+    flb_input_collector_pause(ctx->coll_fd, ctx->ins);
+
+    mk_list_foreach(head, &ctx->collectors)
+    {
+        coll = mk_list_entry(head, struct flb_ce_collector, _head);
+        if (coll->activated == FLB_FALSE) {
+            continue;
+        }
+        flb_input_collector_pause(coll->coll_fd, ctx->ins);
+    }
+}
+
+static void in_ce_resume(void* data, struct flb_config* config)
+{
+    struct flb_ce* ctx = data;
+    struct flb_ce_collector* coll;
+    struct mk_list* head;
+
+    flb_input_collector_resume(ctx->coll_fd, ctx->ins);
+    mk_list_foreach(head, &ctx->collectors)
+    {
+        coll = mk_list_entry(head, struct flb_ce_collector, _head);
+        if (coll->activated == FLB_FALSE) {
+            continue;
+        }
+        flb_input_collector_resume(coll->coll_fd, ctx->ins);
+    }
+}
+
 static struct flb_config_map config_map[] = {
     { FLB_CONFIG_MAP_TIME,
         "scrape_interval",
@@ -214,8 +249,8 @@ struct flb_input_plugin in_cgroup_exporter_metrics_plugin = {
     .cb_collect = in_ce_collect,
     .cb_flush_buf = NULL,
     .config_map = config_map,
-    .cb_pause = NULL,
-    .cb_resume = NULL,
+    .cb_pause = in_ce_pause,
+    .cb_resume = in_ce_resume,
     .cb_exit = in_ce_exit,
     .flags = 0
 };
