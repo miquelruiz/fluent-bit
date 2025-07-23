@@ -202,6 +202,8 @@ static struct flb_config_map config_map[] = {
         FLB_TRUE,
         offsetof(struct flb_ce, psi_controllers),
         "Comma separated list of controllers to monitor PSI" },
+    /* EOF */
+    { 0 },
 };
 
 struct flb_input_plugin in_cgroup_exporter_metrics_plugin = {
